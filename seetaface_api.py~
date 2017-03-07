@@ -1,0 +1,114 @@
+from ctypes import *
+import cv2
+import matplotlib.pyplot as plt
+import copy as cp
+
+class Landmarks:
+    def __init__(self):
+        self.x = [0.0] * 5
+        self.y = [0.0] * 5
+
+class Face:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.width = 0
+        self.height = 0
+        self.landmarks = Landmarks()
+
+class SeetaFace:
+    def __init__(self):
+        self.det_lib = ""
+        self.det_model = ""
+        self.alg_lib = ""
+        self.alg_model = ""
+        self.vrf_lib = ""
+        self.vrf_model = ""
+        self.min_face_size = 40
+        self.score_thresh = 2.0
+        self.image_pyramid_scale_factor = 0.8
+        self.window_step = [4, 4]
+
+    def face_detect(self, img_path):
+        lib = cdll.LoadLibrary(self.det_lib)
+        class _Face(Structure):
+                pass
+        _Face._fields_ = [("null", c_bool), ("x", c_int), ("y", c_int), ("width", c_int), ("height", c_int), ("next", POINTER(_Face))]
+        lib.detect.restype = POINTER(_Face)
+
+        root = lib.detect(img_path, self.det_model, self.min_face_size, c_float(self.score_thresh),
+                c_float(self.image_pyramid_scale_factor), self.window_step[0], self.window_step[1])
+        faces = []
+        face = Face()
+        while not root.contents.null:
+            face.height = root.contents.height
+            face.width = root.contents.width
+            face.x = root.contents.x
+            face.y = root.contents.y
+            faces.append(cp.deepcopy(face))
+            root = root.contents.next
+        return faces
+
+    def face_align(self, img_path):
+        lib = cdll.LoadLibrary(self.alg_lib)
+        class _Facelandmarks(Structure):
+                pass
+        _Facelandmarks._fields_ = [("null", c_bool), ("x", c_int * 5), ("y", c_int * 5), ("next", POINTER(_Facelandmarks))]
+        lib.align.restype = POINTER(_Facelandmarks)
+
+        root = lib.align(img_path, self.det_model, self.alg_model, self.min_face_size, c_float(self.score_thresh),
+         c_float(self.image_pyramid_scale_factor), self.window_step[0], self.window_step[1])
+        landmarks = []
+        lm = Landmarks()
+        while not root.contents.null:
+            for i in range(5):
+                lm.x[i] = root.contents.x[i]
+                lm.y[i] = root.contents.y[i]
+            landmarks.append(cp.deepcopy(lm))
+            root = root.contents.next
+        return landmarks
+
+    def face_verify(self, img_path1, img_path2):
+        lib = cdll.LoadLibrary(self.vrf_lib)
+        lib.verify.restype = c_float
+
+        return lib.verify(img_path1, img_path2, self.det_model, self.alg_model, self.vrf_model, self.min_face_size,
+         c_float(self.score_thresh), c_float(self.image_pyramid_scale_factor), self.window_step[0], self.window_step[1])
+
+def test():
+    seetaface = SeetaFace()
+    seetaface.det_lib = 'seetaface/so/libseeta_facedet_lib.so'
+    seetaface.det_model = 'seetaface/model/seeta_fd_frontal_v1.0.bin'
+    seetaface.alg_lib = 'seetaface/so/libseeta_fa_lib.so'
+    seetaface.alg_model = 'seetaface/model/seeta_fa_v1.1.bin'
+    seetaface.vrf_lib = 'seetaface/so/libviplnet.so.4.5'
+    seetaface.vrf_model = 'seetaface/model/seeta_fr_v1.0.bin'
+
+    landmarks = seetaface.face_align('face_detection/ba.jpg')
+    faces = seetaface.face_detect('face_detection/ba.jpg')
+    #read img
+    img = cv2.imread('face_detection/ba.jpg')
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    #draw Rect
+    for i in faces:
+        img[i.y, i.x:i.x + i.width] = [255, 0, 0]
+        img[i.y + i.height, i.x:i.x + i.width] = [255, 0, 0]
+        img[i.y:i.y + i.height, i.x] = [255, 0, 0]
+        img[i.y:i.y + i.height, i.x + i.width] = [255, 0, 0]
+
+    #draw landmarks
+    for i in landmarks:
+        for j in range(5):
+            img[i.y[j]-1:i.y[j]+1, i.x[j] - 1: i.x[j]+1] = [255, 0, 0]
+    plt.imshow(img)
+    plt.show()
+
+    # faces = seetaface.face_detect('myface/b.jpg')
+    # img_ori = cv2.imread('myface/b.jpg')
+    # cnt = 0
+    # for i in faces:
+    #     cnt += 1
+    #     img = img_ori[i.y: i.y + i.height, i.x:i.x + i.width]
+    #     cv2.imwrite('myface/' + str(cnt) + '.jpg', img)
+    print seetaface.face_verify('myface/ba.jpg', 'myface/bb.jpg')
+# test()

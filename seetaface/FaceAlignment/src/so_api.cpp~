@@ -1,0 +1,90 @@
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <string>
+
+#include "cv.h"
+#include "highgui.h"
+
+#include "face_alignment.h"
+#include "face_detection.h"
+using namespace std;
+
+struct FaceLandMarks{
+    bool null = true;
+    int x[5], y[5];
+    FaceLandMarks* next = NULL;
+};
+extern "C" {
+    FaceLandMarks* align(char* img_path, char* det_model_path, char* alg_model_path,
+        int min_face_size, float score_thresh, float image_pyramid_scale_factor, int window_step_x, int window_step_y)
+    {
+	cout << "done"<<endl;
+        // Initialize face detection model
+        seeta::FaceDetection detector(det_model_path);
+	    detector.SetMinFaceSize(min_face_size);
+        detector.SetScoreThresh(score_thresh);
+        detector.SetImagePyramidScaleFactor(image_pyramid_scale_factor);
+        detector.SetWindowStep(window_step_x, window_step_y);
+
+        // Initialize face alignment model
+        seeta::FaceAlignment point_detector(alg_model_path);
+
+        //load image
+        IplImage *img_grayscale = NULL;
+        img_grayscale = cvLoadImage(img_path, 0);
+        if (img_grayscale == NULL)
+        {
+            return NULL;
+        }
+
+        IplImage *img_color = cvLoadImage(img_path, 1);
+        int pts_num = 5;
+        int im_width = img_grayscale->width;
+        int im_height = img_grayscale->height;
+        unsigned char* data = new unsigned char[im_width * im_height];
+        unsigned char* data_ptr = data;
+        unsigned char* image_data_ptr = (unsigned char*)img_grayscale->imageData;
+        int h = 0;
+        for (h = 0; h < im_height; h++) {
+            memcpy(data_ptr, image_data_ptr, im_width);
+            data_ptr += im_width;
+            image_data_ptr += img_grayscale->widthStep;
+        }
+
+        seeta::ImageData image_data;
+        image_data.data = data;
+        image_data.width = im_width;
+        image_data.height = im_height;
+        image_data.num_channels = 1;
+
+        // Detect faces
+        std::vector<seeta::FaceInfo> faces = detector.Detect(image_data);
+        int32_t face_num = static_cast<int32_t>(faces.size());
+	cout << face_num<<endl;
+        if (face_num == 0)
+        {
+            delete[]data;
+            cvReleaseImage(&img_grayscale);
+            cvReleaseImage(&img_color);
+            return 0;
+        }
+        FaceLandMarks* root = new FaceLandMarks;
+        FaceLandMarks* now = root;
+        // Detect 5 facial landmarks
+	cout << faces.size() << endl;
+        for(int i = 0; i < faces.size(); i++){
+            seeta::FacialLandmark points[5];
+            point_detector.PointDetectLandmarks(image_data, faces[i], points);
+            for(int j = 0; j < 5; j++){
+                now->x[j] = points[j].x;
+                now->y[j] = points[j].y;
+            }
+            now->null = false;
+            now->next = new FaceLandMarks;
+            now = now->next;
+        }
+        return root;
+    }
+}
+

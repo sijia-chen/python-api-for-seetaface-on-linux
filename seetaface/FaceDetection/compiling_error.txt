@@ -1,0 +1,15 @@
+In file included from /usr/include/c++/5/cstdint:35:0,
+                 from /home/deeplearning/桌面/Face Recognizer/SeetaFaceEngine-master/FaceDetection/test.cpp:1:
+/usr/include/c++/5/bits/c++0x_warning.h:32:2: error: #error This file requires compiler and library support for the ISO C++ 2011 standard. This support must be enabled with the -std=c++11 or -std=gnu++11 compiler options.
+ #error This file requires compiler and library support \
+  ^
+In file included from /home/deeplearning/桌面/Face Recognizer/SeetaFaceEngine-master/FaceDetection/include/face_detection.h:38:0,
+                 from /home/deeplearning/桌面/Face Recognizer/SeetaFaceEngine-master/FaceDetection/test.cpp:8:
+/home/deeplearning/桌面/Face Recognizer/SeetaFaceEngine-master/FaceDetection/include/common.h: In constructor ‘seeta::ImageData::ImageData()’:
+/home/deeplearning/桌面/Face Recognizer/SeetaFaceEngine-master/FaceDetection/include/common.h:63:12: error: ‘nullptr’ was not declared in this scope
+     data = nullptr;
+            ^
+/home/deeplearning/桌面/Face Recognizer/SeetaFaceEngine-master/FaceDetection/include/common.h: In constructor ‘seeta::ImageData::ImageData(int32_t, int32_t, int32_t)’:
+/home/deeplearning/桌面/Face Recognizer/SeetaFaceEngine-master/FaceDetection/include/common.h:71:12: error: ‘nullptr’ was not declared in this scope
+     data = nullptr;
+            ^
