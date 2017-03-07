@@ -8,7 +8,7 @@ This is a python API for SeetaFace on Linux. Based on Seetaface source files, I 
 
 **`face_detect`**:Detects faces in an image.
 
-**`face_align`**:Detects faces in an image, returns 5 landmarks, i.e, 2 left eye centers, nose tip and two mouth corners, in every face.
+**`face_align`**:Detects faces in an image, returns 5 landmarks, i.e., 2 left eye centers, nose tip and two mouth corners, in every face.
 
 **`face_verify`**:Detects only **one** face and its landmarks in every image, calculates the similarity among these two faces.
 
