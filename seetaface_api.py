@@ -40,13 +40,14 @@ class SeetaFace:
                 c_float(self.image_pyramid_scale_factor), self.window_step[0], self.window_step[1])
         faces = []
         face = Face()
-        while not root.contents.null:
-            face.height = root.contents.height
-            face.width = root.contents.width
-            face.x = root.contents.x
-            face.y = root.contents.y
-            faces.append(cp.deepcopy(face))
-            root = root.contents.next
+        if root:
+            while not root.contents.null:
+                face.height = root.contents.height
+                face.width = root.contents.width
+                face.x = root.contents.x
+                face.y = root.contents.y
+                faces.append(cp.deepcopy(face))
+                root = root.contents.next
         return faces
 
     def face_align(self, img_path):
@@ -62,12 +63,13 @@ class SeetaFace:
          c_float(self.image_pyramid_scale_factor), self.window_step[0], self.window_step[1])
         landmarks = []
         lm = Landmarks()
-        while not root.contents.null:
-            for i in range(5):
-                lm.x[i] = root.contents.x[i]
-                lm.y[i] = root.contents.y[i]
-            landmarks.append(cp.deepcopy(lm))
-            root = root.contents.next
+        if root:
+            while not root.contents.null:
+                for i in range(5):
+                    lm.x[i] = root.contents.x[i]
+                    lm.y[i] = root.contents.y[i]
+                landmarks.append(cp.deepcopy(lm))
+                root = root.contents.next
         return landmarks
 
     def face_verify(self, img_path1, img_path2):
